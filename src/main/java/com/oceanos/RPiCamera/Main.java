@@ -2,6 +2,7 @@ package com.oceanos.RPiCamera;
 
 import com.oceanos.RPiCamera.device.RPiWebcam;
 import com.oceanos.RPiCamera.device.WebcamWebSocketHandler;
+import com.pi4j.util.Console;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
@@ -20,6 +21,10 @@ public class Main {
                 factory.register(WebcamWebSocketHandler.class);
             }
         };
+
+        final Console console = new Console();
+       /* console.title("<-- The Pi4J Project -->", "Robocar project");
+        console.promptForExit();*/
 
         server.setHandler(wsHandler);
         server.start();

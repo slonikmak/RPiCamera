@@ -35,5 +35,11 @@ public class RPiWebcam {
     public void activate(CameraListener listener) {
         webcamCapture = new WebcamCapture(width, height, name);
         webcamCapture.setListener(listener);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("close");
+            webcamCapture.close();
+        }));
+
     }
 }

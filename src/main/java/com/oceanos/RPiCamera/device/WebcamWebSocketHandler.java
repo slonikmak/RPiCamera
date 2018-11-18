@@ -7,6 +7,7 @@ import com.github.sarxos.webcam.WebcamEvent;
 import com.github.sarxos.webcam.WebcamListener;
 import com.github.sarxos.webcam.WebcamResolution;
 import com.github.sarxos.webcam.ds.v4l4j.V4l4jDriver;
+import com.pi4j.io.serial.*;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 
@@ -35,6 +36,8 @@ public class WebcamWebSocketHandler {
 
     private Session session;
 
+    private final Serial serial = SerialFactory.createInstance();
+
     private void teardown() {
         try {
             session.close();
@@ -47,6 +50,8 @@ public class WebcamWebSocketHandler {
     private void setup(Session session) {
         this.session = session;
 
+        initSerial();
+
         Map<String, Object> message = new HashMap<String, Object>();
         message.put("type", "list");
         message.put("webcams", Arrays.asList("/dev/video0"));
@@ -54,11 +59,11 @@ public class WebcamWebSocketHandler {
         send(message);
 
 
-       /* Webcam webcam = Webcam.getWebcamByName("/dev/video1");
+        /*Webcam webcam = Webcam.getWebcamByName("/dev/video0");
         webcam.setViewSize(new Dimension(640, 480));
-        webcam.open();*/
+        webcam.open();
 
-        /*new Thread(()->{
+        new Thread(()->{
             while (true){
                 try {
                     BufferedImage bufferedImage = webcam.getImage();
@@ -77,9 +82,9 @@ public class WebcamWebSocketHandler {
                     e.printStackTrace();
                 }
             }
-        }).start();*/
-
-        RPiWebcam rPiWebcam = new RPiWebcam(1280, 720);
+        }).start();
+*/
+        RPiWebcam rPiWebcam = new RPiWebcam(320, 240, "/dev/video0");
         rPiWebcam.activate((d,l)-> {
             System.out.println("recived "+l);
             newImage(d);
@@ -107,6 +112,11 @@ public class WebcamWebSocketHandler {
     @OnWebSocketMessage
     public void onMessage(String message) {
         LOG.info("WebSocket message, text = " + message);
+        try {
+            serial.writeln(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void newImage(BufferedImage image) throws IOException {
@@ -156,5 +166,74 @@ public class WebcamWebSocketHandler {
             //LOG.error(e.getMessage(), e);
             e.printStackTrace();
         }
+    }
+
+    private void initSerial(){
+
+
+        ///////////SERIAL INIT
+        serial.addListener(new SerialDataEventListener() {
+            @Override
+            public void dataReceived(SerialDataEvent event) {
+
+                // NOTE! - It is extremely important to read the data received from the
+                // serial port.  If it does not get read from the receive buffer, the
+                // buffer will continue to grow and consume memory.
+
+                // print out the data received to the console
+                try {
+                    //System.out.println("[HEX DATA]   " + event.getHexByteString());
+                    System.out.println("[ASCII DATA] " + event.getAsciiString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        ////////////
+
+        try {
+            // create serial config object
+            SerialConfig config = new SerialConfig();
+
+            // set default serial settings (device, baud rate, flow control, etc)
+            //
+            // by default, use the DEFAULT com port on the Raspberry Pi (exposed on GPIO header)
+            // NOTE: this utility method will determine the default serial port for the
+            //       detected platform and board/model.  For all Raspberry Pi models
+            //       except the 3B, it will return "/dev/ttyAMA0".  For Raspberry Pi
+            //       model 3B may return "/dev/ttyS0" or "/dev/ttyAMA0" depending on
+            //       environment configuration.
+            config.device("/dev/ttyUSB0")
+                    .baud(Baud._9600)
+                    .dataBits(DataBits._8)
+                    .parity(Parity.NONE)
+                    .stopBits(StopBits._1)
+                    .flowControl(FlowControl.NONE);
+
+            // parse optional command argument options to override the default serial settings.
+
+            // display connection details
+            System.out.println(" Connecting to: " + config.toString());
+
+
+            // open the default serial device/port with the configuration settings
+            serial.open(config);
+
+
+        }
+        catch(IOException ex) {
+            System.out.println(" ==>> SERIAL SETUP FAILED : " + ex.getMessage());
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(()->{
+            System.out.println("close serial");
+            try {
+                serial.flush();
+                //serial.
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }));
     }
 }

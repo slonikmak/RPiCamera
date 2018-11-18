@@ -54,9 +54,12 @@ public class WebcamCapture implements CaptureCallback {
         } catch (V4L4JException ex) {
            ex.printStackTrace();
         }
+
+
     }
 
     private void initFrameGrabber() throws V4L4JException {
+        System.out.println("camera : "+name);
         videoDevice = new VideoDevice(name);
         frameGrabber = videoDevice.getJPEGFrameGrabber(width, height, channel, std, q);
         frameGrabber.setCaptureCallback(this);
