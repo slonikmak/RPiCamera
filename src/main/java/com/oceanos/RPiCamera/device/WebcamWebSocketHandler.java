@@ -60,7 +60,7 @@ public class WebcamWebSocketHandler {
 
 
         /*Webcam webcam = Webcam.getWebcamByName("/dev/video0");
-        webcam.setViewSize(new Dimension(640, 480));
+        webcam.setViewSize(new Dimension(320, 240));
         webcam.open();
 
         new Thread(()->{
@@ -82,8 +82,7 @@ public class WebcamWebSocketHandler {
                     e.printStackTrace();
                 }
             }
-        }).start();
-*/
+        }).start();*/
         RPiWebcam rPiWebcam = new RPiWebcam(320, 240, "/dev/video0");
         rPiWebcam.activate((d,l)-> {
             System.out.println("recived "+l);

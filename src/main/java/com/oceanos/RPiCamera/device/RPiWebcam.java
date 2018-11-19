@@ -19,7 +19,7 @@ public class RPiWebcam {
     private WebcamCapture webcamCapture;
 
     public RPiWebcam(int width, int height){
-        this(width, height, "/dev/video1");
+        this(width, height, "/dev/video0");
     }
 
     public RPiWebcam(int width, int height, String name) {
